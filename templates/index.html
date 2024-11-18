@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Stock Data Viewer</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 30px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Headings */
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-top: 0;
+        }
+        
+        /* Stock Data Section */
+        .stock-data {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+        }
+        .stock-data ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .stock-data li {
+            margin: 8px 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .stock-data li strong {
+            color: #34495e;
+        }
+
+        /* Chart Section */
+        .chart {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .chart img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-top: 30px;
+            text-align: center;
+        }
+        label {
+            font-size: 18px;
+            color: #34495e;
+        }
+        input[type="text"] {
+            width: 60%;
+            padding: 10px;
+            font-size: 16px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Footer Message */
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+    </style>
+    <script>
+        // Function to fetch and update stock data every 60 seconds
+        function fetchStockData() {
+            const symbol = "{{ symbol }}";  // Pass symbol from Flask
+            fetch(`/get_stock_data?symbol=${symbol}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        // Update stock data on the page
+                        document.getElementById('regularMarketPrice').innerText = data.regularMarketPrice || 'N/A';
+                        document.getElementById('fiftyTwoWeekHigh').innerText = data.fiftyTwoWeekHigh || 'N/A';
+                        document.getElementById('fiftyTwoWeekLow').innerText = data.fiftyTwoWeekLow || 'N/A';
+                        document.getElementById('regularMarketDayHigh').innerText = data.regularMarketDayHigh || 'N/A';
+                        document.getElementById('regularMarketDayLow').innerText = data.regularMarketDayLow || 'N/A';
+                        document.getElementById('regularMarketVolume').innerText = data.regularMarketVolume || 'N/A';
+                        document.getElementById('previousClose').innerText = data.previousClose || 'N/A';
+                        document.getElementById('currency').innerText = data.currency || 'N/A';
+                        document.getElementById('regularMarketTime').innerText = data.regularMarketTime || 'N/A';
+                    } else {
+                        console.error("Error fetching stock data:", data.error);
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+
+        // Start fetching data every 60 seconds (60000 ms)
+        setInterval(fetchStockData, 60000);
+    </script>
+</head>
+<body onload="fetchStockData()">
+    <div class="container">
+        <h1>Stock Data Viewer</h1>
+        
+        <!-- Display stock data if available -->
+        {% if stock_data %}
+            <div class="stock-data">
+                <ul>
+                    <li><strong>Symbol:</strong> {{ symbol }}</li>
+                    <li><strong>Regular Market Price:</strong> <span id="regularMarketPrice">{{ stock_data['regularMarketPrice'] }}</span></li>
+                    <li><strong>52 Week High:</strong> <span id="fiftyTwoWeekHigh">{{ stock_data['fiftyTwoWeekHigh'] }}</span></li>
+                    <li><strong>52 Week Low:</strong> <span id="fiftyTwoWeekLow">{{ stock_data['fiftyTwoWeekLow'] }}</span></li>
+                    <li><strong>Day's High:</strong> <span id="regularMarketDayHigh">{{ stock_data['regularMarketDayHigh'] }}</span></li>
+                    <li><strong>Day's Low:</strong> <span id="regularMarketDayLow">{{ stock_data['regularMarketDayLow'] }}</span></li>
+                    <li><strong>Market Volume:</strong> <span id="regularMarketVolume">{{ stock_data['regularMarketVolume'] }}</span></li>
+                    <li><strong>Previous Close:</strong> <span id="previousClose">{{ stock_data['previousClose'] }}</span></li>
+                    <li><strong>Currency:</strong> <span id="currency">{{ stock_data['currency'] }}</span></li>
+                    <li><strong>Market Time:</strong> <span id="regularMarketTime">{{ stock_data['regularMarketTime'] }}</span></li>
+                </ul>
+            </div>
+            
+            <!-- Display chart image if generated -->
+            {% if chart_path %}
+                <div class="chart">
+                    <h2>Stock Price Chart (Last Month)</h2>
+                    <img src="{{ url_for('static', filename=chart_path.split('/')[-1]) }}" alt="Stock Chart for {{ symbol }}">
+                </div>
+            {% endif %}
+        {% else %}
+            <p style="text-align: center; font-size: 16px; color: #888;">
+                No stock data available. Please enter a symbol to view data.
+            </p>
+        {% endif %}
+
+        <!-- Form to input stock symbol -->
+        <div class="form-group">
+            <form method="post">
+                <label for="symbol">Enter Stock Symbol:</label><br>
+                <input type="text" id="symbol" name="symbol" placeholder="Enter stock symbol" required>
+                <button type="submit">Get Stock Data</button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; {{ datetime.utcnow().year }} Stock Data Viewer | Powered by Flask and Yahoo Finance API</p>
+        </div>
+    </div>
+</body>
+</html>
